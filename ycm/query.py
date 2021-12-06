@@ -192,10 +192,26 @@ class Ycm(YcmQuery):
 
             conn = self.conn
             cursor = self.cursor
-            token = generate_randstring(12)
+            token = generate_randstring(18)
             cursor.execute("INSERT INTO users (userid, username, token, description, permissions) VALUES (?, ?, ?, ?, ?)",
                            [userid, username, token, description, permission])
             conn.commit()
             return ret_models.return_status(0, "success", token=token)  # 成功添加token
+        except Exception as sb:
+            return ret_models.return_status(500, repr(sb))
+
+    def update_token(self, token_before: str, token_after: str):
+        if token_after is None:
+            token_after = generate_randstring(18)
+        if len(token_after) < 12:
+            return ret_models.return_status(1001, "The token needs at least 12 characters.")
+
+        conn = self.conn
+        cursor = self.cursor
+        try:
+            cursor.execute("UPDATE users SET token=? WHERE token=?", [token_after, token_before])
+            conn.commit()
+            return ret_models.return_status(0, "success", token=token_after)
+
         except Exception as sb:
             return ret_models.return_status(500, repr(sb))

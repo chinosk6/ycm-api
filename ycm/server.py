@@ -66,6 +66,18 @@ def add_token():
     ret = ycm.add_token(userid, username, description, permission)
     return jsonify(ret)
 
+@ycm_server.route('/update_token', methods=["GET", "POST"])
+def update_token():
+    token = request.args.get("token")
+    token_set = request.args.get("token_set")
+    uip = get_ip()
+
+    if not ycm.check_permission(token, 1, uip):
+        return jsonify(ret_models.return_status(403, "permission denied"))
+
+    ret = ycm.update_token(token, token_set)
+    return jsonify(ret)
+
 
 @ycm_server.route("/add_car_table", methods=["GET", "POST"])
 def add_car_table():
