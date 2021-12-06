@@ -4,23 +4,6 @@
 
 
 
-# 自行部署
-
-- 确保您拥有`python3`环境
-- 需要以下包: `pip install -r requirements.txt`
-
-```
-Flask~=2.0.1
-```
-
-- 运行: 
-  - 编辑`app.py`内的ip和端口
-  - `python app.py`
-
-- 说明: 自行部署之后有一个权限为`3`的初始token: `admin`, 请使用[更新token](#更新token)接口自行更改, 或者直接编辑数据库。
-
-
-
 # API说明
 
 - 公共API: `https://ycm.chinosk6.cn`
@@ -158,4 +141,21 @@ Flask~=2.0.1
 | 1001   | 参数输入错误      |
 | 1002   | 参数类型错误      |
 | 1003   | 缺少必要参数      |
+
+
+
+# 自行部署
+
+- 确保您拥有`python3`环境
+- 需要以下包: `pip install -r requirements.txt`
+
+```
+Flask~=2.0.1
+```
+
+- 运行: 
+  - 编辑`app.py`内的ip和端口
+  - `python app.py`
+
+- 说明: 自行部署之后有一个权限为`3`的初始token: `admin`, 请使用[更新token](#更新token)接口自行更改, 或者直接编辑数据库。
 
