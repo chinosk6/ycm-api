@@ -100,13 +100,18 @@ class YcmQuery:
             conn = self.conn
             cursor = self.cursor
 
-            query = cursor.execute(f"SELECT car_id, room_id, description, data_from, creator_id, more_info, add_time"
-                                   f" FROM {_car_type} WHERE add_time > ? AND room_id=?",
-                                   [int(time.time()) - 120, room_id]).fetchone()
-            if query is not None:
-                _car = ret_models.return_car(query[0], query[1], query[2], query[3], query[4], query[5], query[6])
-                return ret_models.return_status(1004, "ycl!", car=_car, car_type=_car_type)
-
+            qs = cursor.execute(f"SELECT car_id, room_id, description, data_from, creator_id, more_info, add_time"
+                                f" FROM {_car_type} WHERE add_time > ? AND (room_id=? OR creator_id=?)",
+                                [int(time.time()) - 120, room_id, creator_id]).fetchall()
+            u_count = 0
+            for query in qs:
+                if query[1] == room_id:  # 撞车车
+                    _car = ret_models.return_car(query[0], query[1], query[2], query[3], query[4], query[5], query[6])
+                    return ret_models.return_status(1004, "ycl!", car=_car, car_type=_car_type)
+                else:
+                    u_count += 1
+            if u_count >= 2:
+                return ret_models.return_status(1005, "quantity limit")
 
             result = cursor.execute(f"INSERT INTO {_car_type} (room_id, description, data_from, creator_id, more_info, "
                                     f"add_time) VALUES (?, ?, ?, ?, ?, ?)",
