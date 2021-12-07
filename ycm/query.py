@@ -6,6 +6,7 @@ import random
 import string
 import json
 from typing import List
+from threading import RLock
 
 
 def generate_randstring(num=8):
@@ -18,6 +19,7 @@ class YcmQuery:
         self.spath = spath
         self.conn = sqlite3.connect(f"{spath}/data/car_numbers.db", check_same_thread=False)
         self.cursor = self.conn.cursor()
+        self.lock = RLock()
 
 
     def car_types(self, car_type: str):
@@ -86,24 +88,36 @@ class YcmQuery:
 
     def add_car(self, car_type: str, room_id: str, description: str, data_from: str, creator_id: str, more_info=""):
         try:
+            self.lock.acquire()
+
             if None in [car_type, room_id, description, data_from, creator_id]:
                 return ret_models.return_status(1003, "missing required parameters")
-
-            conn = self.conn
-            cursor = self.cursor
 
             _car_type = self.car_types(car_type)
             if _car_type is None:
                 return ret_models.return_status(1001, "invalid car_type")  # 车类型错误
+
+            conn = self.conn
+            cursor = self.cursor
+
+            query = cursor.execute(f"SELECT car_id, room_id, description, data_from, creator_id, more_info, add_time"
+                                   f" FROM {_car_type} WHERE add_time > ? AND room_id=?",
+                                   [int(time.time()) - 120, room_id]).fetchone()
+            if query is not None:
+                _car = ret_models.return_car(query[0], query[1], query[2], query[3], query[4], query[5], query[6])
+                return ret_models.return_status(1004, "ycl!", car=_car, car_type=_car_type)
+
 
             result = cursor.execute(f"INSERT INTO {_car_type} (room_id, description, data_from, creator_id, more_info, "
                                     f"add_time) VALUES (?, ?, ?, ?, ?, ?)",
                                     [room_id, description, data_from, creator_id, more_info, int(time.time())])
 
             conn.commit()
-            return ret_models.return_status(0, "success", id=result.lastrowid)  # 开车成功
+            return ret_models.return_status(0, "success", id=result.lastrowid, car_type=_car_type)  # 开车成功
         except Exception as sb:
             return ret_models.return_status(500, repr(sb))
+        finally:
+            self.lock.release()
 
 
     def query_car(self, car_type: str, time_seconds: int):
@@ -120,14 +134,15 @@ class YcmQuery:
         result = cursor.execute(f"SELECT car_id, room_id, description, data_from, creator_id, more_info, add_time "
                                 f"FROM {_car_type} WHERE add_time > ?", [int(time.time()) - int(time_seconds)]).fetchall()
         if not result:
-            return ret_models.return_status(404, "myc")  # 没有车!!!
+            return ret_models.return_status(404, "myc",  car_type=_car_type)  # 没有车!!!
+
 
         cars = []
         for car in result:
             _car = ret_models.return_car(car[0], car[1], car[2], car[3], car[4], car[5], car[6])
             cars.append(_car)
 
-        return ret_models.return_status(0, "yc", cars=cars)  # 有车!!!
+        return ret_models.return_status(0, "yc", cars=cars, car_type=_car_type)  # 有车!!!
 
 
 class Ycm(YcmQuery):
@@ -215,3 +230,8 @@ class Ycm(YcmQuery):
 
         except Exception as sb:
             return ret_models.return_status(500, repr(sb))
+
+
+    def __del__(self):
+        self.cursor.close()
+        self.conn.close()
