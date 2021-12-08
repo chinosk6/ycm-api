@@ -97,6 +97,13 @@ class YcmQuery:
             if _car_type is None:
                 return ret_models.return_status(1001, "invalid car_type")  # 车类型错误
 
+            if description.replace(" ", "").isalnum():
+                base_lenth = 50
+            else:
+                base_lenth = 30
+            if len(description) > base_lenth:  # 简介过长
+                return ret_models.return_status(1001, "description too long")
+
             conn = self.conn
             cursor = self.cursor
 
