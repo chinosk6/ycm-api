@@ -97,6 +97,9 @@ class YcmQuery:
             if _car_type is None:
                 return ret_models.return_status(1001, "invalid car_type")  # 车类型错误
 
+            if _car_type == "arcaea":
+                room_id = room_id.upper()
+
             if description.replace(" ", "").isalnum():
                 base_lenth = 50
             else:
