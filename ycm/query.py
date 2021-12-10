@@ -7,6 +7,7 @@ import string
 import json
 from typing import List
 from threading import RLock
+import re
 
 
 def generate_randstring(num=8):
@@ -99,6 +100,10 @@ class YcmQuery:
 
             if _car_type == "arcaea":
                 room_id = room_id.upper()
+                _r = re.findall("^[A-Z]{4}\\d{2}$", room_id)
+                if len(_r) != 1:
+                    return ret_models.return_status(1001, "invalid room_id")
+
 
             if description.replace(" ", "").isalnum():
                 base_lenth = 50
